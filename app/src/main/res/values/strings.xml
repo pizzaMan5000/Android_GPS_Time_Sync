@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">GPS Time Sync</string>
+    <string name="service_name">GPS Time Sync Service</string>
+</resources>
