@@ -40,8 +40,10 @@ public class GPSTimeSyncService extends AccessibilityService {
     LocationListener locationListener;
 
     long GPStime;
+    String gpsConverted_readable;
     String gpsConverted;
-
+    String cmd;
+    
     @Override
     public void onServiceConnected() {
 
@@ -139,18 +141,27 @@ public class GPSTimeSyncService extends AccessibilityService {
                 @Override
                 public void onLocationChanged(Location location) {
 
-                    // GPS Week Number Rollover fallout 2.0 workaround (+1024 weeks, 1024 * 7 * 24 * 60 * 60 * 1000 = 619315200000L, big thx to uri2x)
+                    // GPS Week Number Rollover fallout workarounds:
+                    // 1st GPS Week Number epoch from 01/05/1980 @ 11:59pm (UTC) equivalent to 315964799000
+                    // 2nd GPS Week Number epoch from 08/21/1999 @ 11:59pm (UTC) equivalent to 935279999000
+                    // 3rd GPS Week Number epoch from 04/06/2019 @ 11:59pm (UTC) equivalent to 1554595199000
+                    // 4th GPS Week Number epoch from 11/20/2038 @ 11:59pm (UTC) equivalent to 2173910399000
+                    // ...
+                    // (+1024 weeks, 1024 * 7 * 24 * 60 * 60 * 1000 = 619315200000L, big thx to uri2x)
+                    // please adapt every some 19.7 years due to missing easy compile date var (DSTAMP, TSTAMP, TODAY?) ;-)
                     GPStime = location.getTime();
-                    if ((GPStime > 0) & (GPStime < 1546300800000L)) {
+                    if ((GPStime > 0) & (GPStime < 1554595199000L)) {
                         GPStime += 619315200000L;
                     }
   
-                    // Android CMD Date Format change
-                    if ((Integer.valueOf(android.os.Build.VERSION.SDK_INT)) < 23) {
+                    // Android CMD date
+                    if ((Integer.valueOf(android.os.Build.VERSION.SDK_INT)) < 23) { // Android 6.0+
                         gpsConverted = new java.text.SimpleDateFormat("yyyyMMdd.HHmmss").format(new java.util.Date(GPStime));
+                        String cmd = "date -s " + gpsConverted + "\n";
                     }
                     else {
                         gpsConverted = new java.text.SimpleDateFormat("MMddHHmmyyyy.ss").format(new java.util.Date(GPStime));
+                        String cmd = "date -u " + gpsConverted + " SET" + "\n"; // tested on Android 7.1.2
                     }
 
                     //Toast.makeText(getApplicationContext(), "GPS Time: " + GPStime + "\n\nConverted: " + gpsConverted, Toast.LENGTH_LONG).show();
@@ -204,7 +215,6 @@ public class GPSTimeSyncService extends AccessibilityService {
         // todo set time here
         try {
             System.out.println("** GPS Time Sync Service Setting Time...");
-            String cmd = "date -s " + gpsConverted + "\n";
             bufferedWriter.write(cmd); // YYYYMMDD.HHmmss
             bufferedWriter.flush();
 
