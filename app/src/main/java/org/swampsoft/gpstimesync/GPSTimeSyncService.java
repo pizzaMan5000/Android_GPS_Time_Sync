@@ -144,9 +144,14 @@ public class GPSTimeSyncService extends AccessibilityService {
                     if ((GPStime > 0) & (GPStime < 1546300800000L)) {
                         GPStime += 619315200000L;
                     }
-                    
-                    //String gpsConverted = new java.text.SimpleDateFormat("MM/dd/yy HH:mm:ss").format(new java.util.Date(GPStime));
-                    gpsConverted = new java.text.SimpleDateFormat("yyyyMMdd.HHmmss").format(new java.util.Date(GPStime));
+  
+                    // Android CMD Date Format change
+                    if ((Integer.valueOf(android.os.Build.VERSION.SDK_INT)) < 23) {
+                        gpsConverted = new java.text.SimpleDateFormat("yyyyMMdd.HHmmss").format(new java.util.Date(GPStime));
+                    }
+                    else {
+                        gpsConverted = new java.text.SimpleDateFormat("MMddHHmmyyyy.ss").format(new java.util.Date(GPStime));
+                    }
 
                     //Toast.makeText(getApplicationContext(), "GPS Time: " + GPStime + "\n\nConverted: " + gpsConverted, Toast.LENGTH_LONG).show();
                     System.out.println("** GPS Time: " + GPStime + " Converted: " + gpsConverted);
